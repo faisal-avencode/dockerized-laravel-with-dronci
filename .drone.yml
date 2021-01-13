@@ -15,6 +15,9 @@ steps:
         - app
       ports:
         - '8081:81'
+      build_args:
+        - NGINX_HOST=http://ec2-3-140-192-185.us-east-2.compute.amazonaws.com
+        - NGINX_PORT=8081
   - name: db-build
     image: 'mysql:5.7.22'
     commands:
