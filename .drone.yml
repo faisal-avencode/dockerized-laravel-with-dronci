@@ -1,9 +1,43 @@
 kind: pipeline
 name: default
 steps:
-
+  - name: nginx-build
+    image: 'nginx:stable-alpine'
+    setting:
+      tags: nginx-dev
+      debug: true
+      volumes:
+        - name: app
+          path: './app:/var/www/html'
+        - name: nginx
+          path: './nginx/default.conf:/etc/nginx/conf.d/default.conf'
+      networks:
+        - app
+      ports:
+        - '8081:81'
+  - name: db-build
+    image: 'mysql:5.7.22'
+    commands:
+      - '--default-authentication-plugin=mysql_native_password'
+    settings:
+      tags: db-dev
+      debug: true
+      volumes:
+        - name: mysql
+          path: './mysql:/var/lib/mysql'
+      environment:
+        MYSQL_DADATABASE: app_db
+        MYSQL_USER: root
+        MYSQL_PASSWORD: secret
+        MYSQL_ROOT_PASSWORD: secret
+        SERVICE_TAGS: dev
+        SERVICE_NAME: mysql
+      ports:
+        - '4306:3306'
+      networks:
+        - app
   - name: app-build
-    image: php:7.4-fpm
+    image: 'php:7.4-fpm'
     context: .
     dockerfile: Dockerfile
     settings:
@@ -11,7 +45,7 @@ steps:
       debug: true
       volumes:
         - name: app
-          path: ./app:/var/www/html
+          path: './app:/var/www/html'
         - name: vendor
           path: /var/www/html/vendor
         - name: node_modules
@@ -20,9 +54,16 @@ steps:
         - '9000:9000'
       networks:
         - app
-
+  - name: adminer-build
+    image: adminer
+    settings:
+      tags: adminer-dev
+      debug: true
+      ports:
+        - '8000:8080'
+      networks:
+        - app
   - name: Run
     image: alpine
     commands:
-      - 'docker-compose up --build -d'
-    
+      - docker-compose up --build -d
