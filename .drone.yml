@@ -12,7 +12,6 @@ steps:
         - name: nginx
           path: ./nginx/default.conf:/etc/nginx/conf.d/default.conf
       build_args:
-
   - name: db-build
     image: mysql:5.7.22
     commands: 
@@ -30,7 +29,6 @@ steps:
         MYSQL_ROOT_PASSWORD: secret
         SERVICE_TAGS: dev
         SERVICE_NAME: mysql
-    
   - name: app-build
     image: php:7.4-fpm
     context: .
@@ -43,12 +41,10 @@ steps:
           path: /var/www/html/vendor
         - name: node_modules
           path: /var/www/html/node_modules
-
   - name: adminer-build
     image: adminer
     settings:
       restart: unless-stopped
-  
   - name: Run
     image: alpine
     commands:
