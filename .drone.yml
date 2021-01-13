@@ -1,0 +1,56 @@
+kind: pipeline
+name: default
+steps:
+  - name: nginx-build
+    image: nginx:stable-alpine
+    setting:
+      restart: unless-stopped
+      tty: true
+      volumes:
+        - name: app
+          path: ./app:/var/www/html
+        - name: nginx
+          path: ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      build_args:
+
+  - name: db-build
+    image: mysql:5.7.22
+    commands: 
+      - --default-authentication-plugin=mysql_native_password
+    settings:
+      restart: unless-stopped
+      tty: true
+      volumes:
+        - name: mysql
+          path: ./mysql:/var/lib/mysql
+      environment:
+        MYSQL_DADATABASE: app_db
+        MYSQL_USER: root
+        MYSQL_PASSWORD: secret
+        MYSQL_ROOT_PASSWORD: secret
+        SERVICE_TAGS: dev
+        SERVICE_NAME: mysql
+    
+  - name: app-build
+    image: php:7.4-fpm
+    context: .
+    dockerfile: Dockerfile
+    settings:
+      volumes:
+        - name: app
+          path: ./app:/var/www/html
+        - name: vendor
+          path: /var/www/html/vendor
+        - name: node_modules
+          path: /var/www/html/node_modules
+
+  - name: adminer-build
+    image: adminer
+    settings:
+      restart: unless-stopped
+  
+  - name: Run
+    image: alpine
+    commands:
+      - 'docker-compose up --build -d'
+    
